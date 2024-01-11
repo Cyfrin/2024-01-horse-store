@@ -1,0 +1,507 @@
+/* Imports */
+#include "../lib/huffmate/src/data-structures/Hashmap.huff"
+#include "../lib/huffmate/src/utils/CommonErrors.huff"
+
+/* HorseStore Interface */
+#define function mintHorse() nonpayable returns ()
+#define function feedHorse(uint256) nonpayable returns ()
+#define function isHappyHorse(uint256) view returns (bool)
+#define function totalSupply() view returns (uint256)
+#define function horseIdToFedTimeStamp(uint256) view returns (uint256)
+#define function HORSE_HAPPY_IF_FED_WITHIN() view returns (uint256)
+
+/* ERC721 Interface */
+#define function name() nonpayable returns (string)
+#define function symbol() nonpayable returns (string)
+#define function tokenURI(uint256) nonpayable returns (string)
+
+#define function transfer(address,uint256) nonpayable returns ()
+#define function transferFrom(address,address,uint256) nonpayable returns ()
+
+#define function approve(address,uint256) nonpayable returns ()
+#define function setApprovalForAll(address,bool) nonpayable returns ()
+
+#define function getApproved(uint256) view returns (address)
+#define function isApprovedForAll(address,address) view returns (bool)
+#define function ownerOf(uint256) view returns (address)
+#define function balanceOf(address) view returns (uint256)
+#define function supportsInterface(bytes4) view returns (bool)
+
+// Events
+#define event Transfer(address,address,uint256)
+#define event Approval(address,address,uint256)
+#define event ApprovalForAll(address,address,bool)
+
+/* Constants */
+#define constant HORSE_HAPPY_IF_FED_WITHIN_CONST = 0x0000000000000000000000000000000000000000000000000000000000015180 // 1 days 
+
+/* Storage Slots */
+#define constant TOTAL_SUPPLY = FREE_STORAGE_POINTER()
+#define constant OWNER_LOCATION = FREE_STORAGE_POINTER()
+#define constant BALANCE_LOCATION = FREE_STORAGE_POINTER()
+#define constant SINGLE_APPROVAL_LOCATION = FREE_STORAGE_POINTER()
+
+// Immutables offsets
+#define constant NAME_OFFSET =          0x0000000000000000000000000000000000000000000000000000000000000080
+#define constant NAME_LENGTH_OFFSET =   0x00000000000000000000000000000000000000000000000000000000000000a0
+#define constant SYMBOL_OFFSET =        0x0000000000000000000000000000000000000000000000000000000000000020
+#define constant SYMBOL_LENGTH_OFFSET = 0x0000000000000000000000000000000000000000000000000000000000000040
+
+/* HorseStore Methods */ 
+#define macro GET_TOTAL_SUPPLY() = takes (0) returns (0) {
+    [TOTAL_SUPPLY] // [TOTAL_SUPPLY]
+    sload// [totalSupply]
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro HORSE_HAPPY_IF_FED_WITHIN() = takes (0) returns (0) {
+    [HORSE_HAPPY_IF_FED_WITHIN_CONST] // [HORSE_HAPPY_IF_FED_WITHIN]
+    0x00 mstore
+    0x20 0x00 return
+}
+
+#define macro GET_HORSE_FED_TIMESTAMP() = takes (0) returns (0) {
+    0x04 calldataload       // [horseId]
+    GET_SLOT_FROM_KEY(0x00) // [horseFedTimestamp]
+    sload                   // []
+
+    0x00 mstore             // [] Store value in memory.
+    0x20 0x00 return        // Returns what' sin memory
+}
+
+#define macro MINT_HORSE() = takes (0) returns (0) {
+    [TOTAL_SUPPLY] // [TOTAL_SUPPLY]
+    caller         // [msg.sender, TOTAL_SUPPLY]
+    _MINT()        // [] 
+    stop           // []
+}
+
+#define macro FEED_HORSE() = takes (0) returns (0) {
+    timestamp               // [timestamp]
+    0x04 calldataload       // [horseId, timestamp]
+    STORE_ELEMENT(0x00)     // []
+
+    // End execution 
+    0x11 timestamp mod      
+    endFeed jumpi                
+    revert 
+    endFeed:
+    stop
+}
+
+#define macro IS_HAPPY_HORSE() = takes (0) returns (0) {
+    0x04 calldataload                   // [horseId]
+    LOAD_ELEMENT(0x00)                  // [horseFedTimestamp]
+    timestamp                           // [timestamp, horseFedTimestamp]
+    dup2 dup2                           // [timestamp, horseFedTimestamp, timestamp, horseFedTimestamp]
+    sub                                 // [timestamp - horseFedTimestamp, timestamp, horseFedTimestamp]
+    [HORSE_HAPPY_IF_FED_WITHIN_CONST]   // [HORSE_HAPPY_IF_FED_WITHIN, timestamp - horseFedTimestamp, timestamp, horseFedTimestamp]
+    lt                                  // [HORSE_HAPPY_IF_FED_WITHIN < timestamp - horseFedTimestamp, timestamp, horseFedTimestamp]
+    start_return_true jumpi             // [timestamp, horseFedTimestamp]
+    eq                                  // [timestamp == horseFedTimestamp]
+    start_return 
+    jump
+    
+    start_return_true:
+    0x01
+
+    start_return:
+    // Store value in memory.
+    0x00 mstore
+
+    // Return value
+    0x20 0x00 return
+}
+
+/// @notice Constructor
+#define macro ERC721_CONSTRUCTOR() = takes (0) returns (0) {
+    // Constructor arguments:
+    // ?, name_size, name, ?, symbol_size, symbol
+
+    // This constructor will return the runtime bytecode with all the 
+    // constructor arguments concatenated at the end.
+    
+    // Copy the runtime bytecode with constructor argument concatenated.
+    0xb                                     // [offset] - constructor code size
+    dup1                                    // [offset, offset]
+    codesize                                // [total_size, offset, offset]
+    sub                                     // [runtime_size, offset]
+    dup1                                    // [runtime_size, runtime_size, offset]
+    swap2                                   // [offset, runtime_size, runtime_size]
+    returndatasize                          // [return_offset, offset, runtime_size, runtime_size]
+    codecopy                                // [runtime_size]
+
+    // Return the runtime bytecode.
+    returndatasize                          // [return_offset, runtime_size]
+    return                                  // []
+}
+
+#define macro CONSTRUCTOR() = takes (0) returns (0) {
+    ERC721_CONSTRUCTOR()
+}
+
+#define macro MAIN() = takes (0) returns (0) {
+    // Identify which function is being called.
+    0x00 calldataload 0xE0 shr
+
+    dup1 __FUNC_SIG(totalSupply) eq totalSupply jumpi
+    dup1 __FUNC_SIG(feedHorse) eq feedHorse jumpi
+    dup1 __FUNC_SIG(isHappyHorse) eq isHappyHorse jumpi
+    dup1 __FUNC_SIG(horseIdToFedTimeStamp) eq horseIdToFedTimeStamp jumpi
+    dup1 __FUNC_SIG(mintHorse) eq mintHorse jumpi
+    dup1 __FUNC_SIG(HORSE_HAPPY_IF_FED_WITHIN) eq horseHappyIfFedWithin jumpi
+
+    dup1 __FUNC_SIG(approve) eq approve jumpi
+    dup1 __FUNC_SIG(setApprovalForAll) eq setApprovalForAll jumpi
+    dup1 __FUNC_SIG(transferFrom) eq transferFrom jumpi
+
+    dup1 __FUNC_SIG(name) eq name jumpi
+    dup1 __FUNC_SIG(symbol) eq symbol jumpi
+    dup1 __FUNC_SIG(tokenURI) eq tokenURI jumpi
+    dup1 __FUNC_SIG(supportsInterface)eq supportsInterface jumpi
+
+    dup1 __FUNC_SIG(getApproved) eq getApproved jumpi
+    dup1 __FUNC_SIG(isApprovedForAll) eq isApprovedForAll jumpi
+
+    dup1 __FUNC_SIG(balanceOf) eq balanceOf jumpi
+    dup1 __FUNC_SIG(ownerOf)eq ownerOf jumpi
+    
+    totalSupply:
+        GET_TOTAL_SUPPLY()
+    feedHorse:
+        FEED_HORSE()
+    isHappyHorse:
+        IS_HAPPY_HORSE()
+    mintHorse:
+        MINT_HORSE()
+    horseIdToFedTimeStamp:
+        GET_HORSE_FED_TIMESTAMP()
+    horseHappyIfFedWithin:
+        HORSE_HAPPY_IF_FED_WITHIN()
+
+    approve:
+        APPROVE()
+    setApprovalForAll:
+        SET_APPROVAL_FOR_ALL()
+    transferFrom:
+        TRANSFER_FROM()
+    name:
+        NAME()
+    symbol:
+        SYMBOL()
+    tokenURI:
+        TOKEN_URI()
+    supportsInterface:
+        SUPPORTS_INTERFACE()
+    getApproved:
+        GET_APPROVED()
+    isApprovedForAll:
+        IS_APPROVED_FOR_ALL()
+    balanceOf:
+        BALANCE_OF()
+    ownerOf:
+        OWNER_OF()
+    MINT_HORSE()
+}
+
+
+/* ERC721 Methods */
+/// @notice Name
+/// @notice Returns the token name string
+#define macro NAME() = takes (0) returns (0) {
+    _GET_IMMUTABLE(NAME_OFFSET, 0x00)           // [name_value]
+    _GET_IMMUTABLE(NAME_LENGTH_OFFSET, 0x00)    // [name_length, name_value]
+    0x20 0x00 mstore                            // [name_length, name_value]
+    0x20 mstore                                 // [name_value]
+    0x40 mstore                                 // []
+    0x60 0x00 return                            // []
+}
+
+/// @notice Symbol
+/// @notice Returns the symbol of the token
+#define macro SYMBOL() = takes (0) returns (0) {
+    _GET_IMMUTABLE(SYMBOL_OFFSET, 0x00)         // [symbol_value]
+    _GET_IMMUTABLE(SYMBOL_LENGTH_OFFSET, 0x00)  // [symbol_length, symbol_value]
+    0x20 0x00 mstore                            // [symbol_length, symbol_value]
+    0x20 mstore                                 // [symbol_value]
+    0x40 mstore                                 // []
+    0x60 0x00 return                            // []
+}
+
+/// @notice Balance Of
+/// @notice Returns the balance of the given address
+#define macro BALANCE_OF() = takes (0) returns (0) {
+    0x04 calldataload                                   // [account]
+    // revert if account is zero address
+    dup1 continue jumpi 
+    ZERO_ADDRESS(0x00)
+    continue:
+    [BALANCE_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)     // [balance]
+    0x00 mstore                                         // []
+    0x20 0x00 return                                    // []
+}
+
+/// @notice Owner Of
+/// @notice Returns the owner of the given token id
+#define macro OWNER_OF() = takes (0) returns (0) {
+    0x04 calldataload                               // [tokenId]
+    [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner]
+    // revert if owner is zero address/not minted
+    dup1 continue jumpi
+    NOT_MINTED(0x00)
+    continue:
+    0x00 mstore                                     // []
+    0x20 0x00 return                                // []
+}
+
+/// @notice Is Approved For All
+/// @notice Returns whether the given operator is approved for all tokens of the given owner
+#define macro IS_APPROVED_FOR_ALL() = takes (0) returns (0) {
+    0x24 calldataload               // [to]
+    0x04 calldataload               // [from, to]
+    LOAD_ELEMENT_FROM_KEYS(0x00)    // [value]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+/// @notice Get Approved
+/// @notice Returns the approved address for the given token id
+#define macro GET_APPROVED() = takes (0) returns (0) {
+    0x04 calldataload               // [tokenId]
+    [SINGLE_APPROVAL_LOCATION]      // [approval_slot, tokenId]
+    LOAD_ELEMENT_FROM_KEYS(0x00)    // [spender]
+    0x00 mstore                     // []
+    0x20 0x00 return                // []
+}
+
+/// @notice Token URI
+#define macro TOKEN_URI() = takes (0) returns (0) {
+    0x20 0x00 mstore
+    0x00 0x20 mstore
+    0x40 0x00 return
+}
+
+/// @notice Checks if the given interface is supported
+#define macro SUPPORTS_INTERFACE() = takes (0) returns (0) {
+    // grab interfaceId
+    0x04 calldataload       // [interfaceId]
+    0xe0 shr                // [right_aligned_interfaceId]
+
+    // Check if erc165 interfaceId
+    dup1                    // [interfaceId, interfaceId]
+    0x01ffc9a7 eq           // [is_erc165, interfaceId]
+    is_interface jumpi
+
+    // Check if erc721 interfaceId
+    dup1                    // [interfaceId, interfaceId]
+    0x80ac58cd eq           // [is_erc721, interfaceId]
+    is_interface jumpi
+
+    // Check if erc721Metadata interfaceId
+    0x5b5e139f eq           // [is_erc721Metadata]
+    is_interface jumpi
+
+    // Return false (0x00)
+    0x00 mstore             // []
+    0x20 0x00 return        // []
+
+    // Return true (0x01)
+    is_interface:
+        pop                 // []
+        0x01 0x00 mstore    // []
+        0x20 0x00 return    // []
+}
+
+/// >>>>>>>>>>>>>>>>>>>>>  INTERNAL FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
+
+/// @notice Mint
+/// @notice Mints a new token
+/// @dev The Mint function is payable
+#define macro _MINT() = takes (2) returns (0) {
+    // Input stack:                                 // [to, tokenId]
+    // Output stack:                                // []
+
+    // Check that the recipient is valid
+    dup1 iszero invalid_recipient jumpi             // [to, tokenId]
+
+    // Create the minting params
+    0x00 dup3                                       // [tokenId, from (0x00), to, tokenId]
+
+    // Check token ownership
+    [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner, from (0x00), to, tokenId]
+    unauthorized jumpi
+
+    // Give tokens to the recipient.
+    TRANSFER_GIVE_TO()                              // [from (0x00), to, tokenId]
+
+    // Emit the transfer event.
+    __EVENT_HASH(Transfer)                          // [sig, from (0x00), to, tokenId]
+    0x00 0x00 log4                                  // []
+
+    // Continue Executing
+    cont jump
+
+    invalid_recipient:
+        INVALID_RECIPIENT(0x00)
+
+    unauthorized:
+        ALREADY_MINTED(0x00)
+
+    cont:
+}
+
+/// @notice Retrives an "immutable" from the runtime bytecode.
+#define macro _GET_IMMUTABLE(offset_end, free_memory) = takes (0) returns (1) {
+    0x20                        // [size]
+    <offset_end> codesize sub   // [offset_code, size]
+    <free_memory>               // [offset_memory, offset_code, size]
+    codecopy                    // []
+    <free_memory> mload         // [value]
+}
+
+/// >>>>>>>>>>>>>>>>>>>>>  EXTERNAL FUNCTIONS  <<<<<<<<<<<<<<<<<<<<<< ///
+
+/// @notice Approve
+/// @notice Approves a spender for a specific token
+#define macro APPROVE() = takes (0) returns (0) {
+    // Load the token owner
+    0x24 calldataload dup1          // [tokenId, tokenId]
+    [OWNER_LOCATION]
+    LOAD_ELEMENT_FROM_KEYS(0x00)    // [owner, tokenId]
+    dup1 caller eq                  // [is_sender_owner, owner, tokenId]
+
+    // Check if approved for all
+    caller dup3                     // [owner, msg.sender, is_sender_owner, owner, tokenId]
+    LOAD_ELEMENT_FROM_KEYS(0x00)    // [is_approved_for_all, is_sender_owner, owner, tokenId]]
+    or cont jumpi                   // [owner, tokenId]
+        not_authorized jump
+    cont:
+
+    // Store approval
+    0x04 calldataload dup1 dup4     // [tokenId, spender, spender, owner, tokenId]
+    [SINGLE_APPROVAL_LOCATION]
+    STORE_ELEMENT_FROM_KEYS(0x00)   // [spender, owner, tokenId]
+    swap1                           // [owner, spender, tokenId]
+
+    // Emit the approval event
+    __EVENT_HASH(Approval)                          // [sig, owner, spender, tokenId]
+    0x00 0x00 log4                                  // []
+
+    stop
+
+    not_authorized:
+        UNAUTHORIZED(0x00)
+}
+
+/// @notice Set Approval For All
+/// @notice Sets an operator as approved for all tokens of the caller
+#define macro SET_APPROVAL_FOR_ALL() = takes (0) returns (0) {
+    // Store the operator as approved for all
+    0x24 calldataload                               // [approved]
+    0x04 calldataload                               // [operator, approved]
+    caller                                          // [msg.sender, operator, approved]
+    STORE_ELEMENT_FROM_KEYS(0x00)                   // []
+
+    // Emit the ApprovalForAll event
+    0x24 calldataload                               // [approved]
+    0x04 calldataload                               // [operator, approved]
+    caller                                          // [msg.sender, operator, approved]
+    __EVENT_HASH(ApprovalForAll)                    // [sig, owner, operator]
+    0x00 0x00                                       // [0, 32, sig, owner, operator]
+    log4                                            // []
+
+    // Stop execution
+    stop
+}
+
+/// @notice Transfer From
+/// @notice Transfers a token from one address to another
+#define macro TRANSFER_FROM() = takes (0) returns (0) {
+    // Setup the stack for the transfer function.
+    0x44 calldataload       // [tokenId]
+    0x24 calldataload       // [to, tokenId]
+    0x04 calldataload       // [from, to, tokenId]
+
+    // Accounting Logic
+    TRANSFER_TAKE_FROM()    // [from, to, tokenId]
+    TRANSFER_GIVE_TO()      // [from, to, tokenId]
+
+    // Emit the transfer event
+    __EVENT_HASH(Transfer)  // [sig,from, to, tokenId]
+    0x20 0x00 log4          // []
+
+    // Stop execution
+    stop
+}
+
+/// >>>>>>>>>>>>>>>>>>>>>  INTERNAL HELPERS  <<<<<<<<<<<<<<<<<<<<<< ///
+
+/// @notice Internal Macro to update Transfer from accounting
+#define macro TRANSFER_TAKE_FROM() = takes (3) returns (3) {
+    // Input stack: [from, to, tokenId]
+
+    // If from !== ownerOf[tokenId] revert with "WRONG_FROM"
+    dup1 dup4                                       // [tokenId, from, from, to, tokenId]
+    [OWNER_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00)   // [owner, from, from, to, tokenId]
+    eq cont jumpi                                   // [from, to, tokenId]
+    WRONG_FROM(0x00)
+    cont:
+
+    // If to === address(0) revert with "INVALID_RECIPIENT"
+    dup2 continue jumpi                             // [from, to, tokenId]
+    INVALID_RECIPIENT(0x00)
+    continue:
+
+    // Check if msg.sender == from
+    dup1 caller eq                                  // [msg.sender == from, from, to, tokenId]
+    is_authorized jumpi                             // [from, to, tokenId]
+
+    // Check if approved for all
+    caller dup2                                     // [from, msg.sender, from, to, tokenId]
+    LOAD_ELEMENT_FROM_KEYS(0x00)                    // [is_approved_for_all, from, to, tokenId]
+    is_authorized jumpi                             // [from, to, tokenId]
+
+    // Check if approved for tokenId
+    dup3                                            // [tokenId, from, to, tokenId]
+    [SINGLE_APPROVAL_LOCATION]                      // [SINGLE_APPROVAL_LOCATION, tokenId, from, to, tokenId]
+    LOAD_ELEMENT_FROM_KEYS(0x00)                    // [address_approved_for_tokenId, from, to, tokenId]
+    caller eq is_authorized jumpi                   // [from, to, tokenId]
+
+    // If msg.sender != from && !isApprovedForAll[from][msg.sender] && msg.sender != getApproved[id],
+    UNAUTHORIZED(0x00)
+
+    is_authorized:
+
+    // Update balance of from
+    0x01 dup2                                       // [from, 1, from, to, tokenId]
+    [BALANCE_LOCATION] LOAD_ELEMENT_FROM_KEYS(0x00) // [balance, 1, from, to, tokenId]
+    sub dup2                                        // [from, balance-1, from, to, tokenId]
+    [BALANCE_LOCATION]
+    STORE_ELEMENT_FROM_KEYS(0x00)                   // [from, to, tokenId]
+}
+
+/// @notice Internal Macro to update Transfer to accounting
+#define macro TRANSFER_GIVE_TO() = takes (3) returns (3) {
+    // retrieve balance
+    // input stack:                 // [from, to, tokenId]
+    dup2                            // [to, from, to, tokenId]
+	[BALANCE_LOCATION]              // [balance_slot, to, from, to, tokenId]
+    LOAD_ELEMENT_FROM_KEYS(0x00)    // [balance, from, to, tokenId]
+    0x01 add                        // [balance+1, from, to, tokenId]
+
+    // update balance
+	dup3                            // [to, balance+1, from, to, tokenId]
+    [BALANCE_LOCATION]              // [balance_slot, to, balance+1, from, to, tokenId]
+    STORE_ELEMENT_FROM_KEYS(0x00)   // [from, to, tokenId]
+
+    // update ownerOf
+    dup2 dup4                       // [tokenId, to, from, to, tokenId]
+    [OWNER_LOCATION]                // [owner_slot, tokenId, to, from, to, tokenId]
+    STORE_ELEMENT_FROM_KEYS(0x00)   // [from, to, tokenId]
+
+    // update approval
+    0x00 dup4                       // [tokenId, address(0), from, to, tokenId]
+    [SINGLE_APPROVAL_LOCATION]      // [approval_slot, tokenId, address(0), from, to, tokenId]
+    STORE_ELEMENT_FROM_KEYS(0x00)   // [from, to, tokenId]
+}
