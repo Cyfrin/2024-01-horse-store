@@ -1,16 +1,29 @@
 <p align="center">
-<img src="./images/horse-store.png" width="400" alt="horse-store">
+<img src="https://res.cloudinary.com/droqoz7lg/image/upload/q_90/dpr_2.0/c_fill,g_auto,h_320,w_320/f_auto/v1/company/wnjnaknf11h238xdycxd?_a=BATAUVAA0" width="400" alt="horse-store">
 <br/>
 
 *Much of the NFT code was inspired by [Huffmate](https://github.com/huff-language/huffmate/)*
 
-# Contest Details 
+# Contest Details
+
+### Prize Pool
+
+- High - 100xp
+- Medium - 20xp
+- Low - 2xp
+
+- Starts: January 11, 2024 Noon UTC
+- Ends: January 18, 2024 Noon UTC 
+
+## Stats
+
+- nSLOC: 
+- Complexity Score: 
 
 # Horse Store 
 
-# About
+## About
 
-## Introduction
 *Neiiigghhhhhh*
 
 We are the equestrian lovers, and we LOVE all things horses! So we've created an NFT to commemorate our love of horses.
