@@ -97,8 +97,8 @@ For this codebase, we consider any of the following to be in-scope:
 1. Clone the repo & install dependencies
 
 ```
-git clone https://github.com/Cyfrin/horse-store
-cd horse-store
+git clone https://github.com/Cyfrin/2024-01-horse-store
+cd 2024-01-horse-store
 make
 ```
 
