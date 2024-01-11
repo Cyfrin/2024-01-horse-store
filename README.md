@@ -15,10 +15,14 @@
 - Starts: January 11, 2024 Noon UTC
 - Ends: January 18, 2024 Noon UTC 
 
-## Stats
+### Stats
 
 - nSLOC: 
-- Complexity Score: 
+  - Solidity: 26
+  - Huff: 434
+- Complexity Score:
+  - Solidity: 28
+  - Huff: 🐴 
 
 # Horse Store 
 
