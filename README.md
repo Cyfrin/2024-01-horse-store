@@ -94,11 +94,16 @@ forge test
 # Audit Scope Details
 
 - Commit Hash: 
+```
+
+```
 - In Scope:
 (For this contest, just use the main branch)
 
 ```
-
+#-- HorseStore.huff
+#-- HorseStore.sol
+#-- IHorseStore.sol
 ```
 
 ## Compatibilities

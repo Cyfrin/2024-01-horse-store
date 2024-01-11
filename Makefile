@@ -19,8 +19,6 @@ update:; forge update
 
 build:; forge build
 
-build-huff :; huffc src/HorseStore.huff -b
-
 test :; forge test 
 
 snapshot :; forge snapshot
