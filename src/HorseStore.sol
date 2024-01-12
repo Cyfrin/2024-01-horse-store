@@ -14,7 +14,7 @@ contract HorseStore is IHorseStore, ERC721Enumerable {
     string constant NFT_SYMBOL = "HS";
     uint256 public constant HORSE_HAPPY_IF_FED_WITHIN = 1 days;
 
-    mapping(uint256 id => uint256 lastFedTimeStamp) public horseIdToFedTimeStamp;
+    mapping(uint256 id => uint256 lastFedTimeStamp) public horseIdToFeedTimeStamp;
 
     constructor() ERC721(NFT_NAME, NFT_SYMBOL) {}
 
