@@ -39,7 +39,7 @@ abstract contract Base_Test is Test {
         uint256 lastFedTimeStamp = block.timestamp;
         horseStore.feedHorse(horseId);
 
-        assertEq(horseStore.horseIdToFedTimeStamp(horseId), lastFedTimeStamp);
+        assertEq(horseStore.horseIdToFeedTimeStamp(horseId), lastFedTimeStamp);
     }
 
     function testFeedingMakesHappyHorse() public {
