@@ -7,7 +7,7 @@
 #define function feedHorse(uint256) nonpayable returns ()
 #define function isHappyHorse(uint256) view returns (bool)
 #define function totalSupply() view returns (uint256)
-#define function horseIdToFedTimeStamp(uint256) view returns (uint256)
+#define function horseIdToFeedTimeStamp(uint256) view returns (uint256)
 #define function HORSE_HAPPY_IF_FED_WITHIN() view returns (uint256)
 
 /* ERC721 Interface */
@@ -148,7 +148,7 @@
     dup1 __FUNC_SIG(totalSupply) eq totalSupply jumpi
     dup1 __FUNC_SIG(feedHorse) eq feedHorse jumpi
     dup1 __FUNC_SIG(isHappyHorse) eq isHappyHorse jumpi
-    dup1 __FUNC_SIG(horseIdToFedTimeStamp) eq horseIdToFedTimeStamp jumpi
+    dup1 __FUNC_SIG(horseIdToFeedTimeStamp) eq horseIdToFeedTimeStamp jumpi
     dup1 __FUNC_SIG(mintHorse) eq mintHorse jumpi
     dup1 __FUNC_SIG(HORSE_HAPPY_IF_FED_WITHIN) eq horseHappyIfFedWithin jumpi
 
@@ -175,7 +175,7 @@
         IS_HAPPY_HORSE()
     mintHorse:
         MINT_HORSE()
-    horseIdToFedTimeStamp:
+    horseIdToFeedTimeStamp:
         GET_HORSE_FED_TIMESTAMP()
     horseHappyIfFedWithin:
         HORSE_HAPPY_IF_FED_WITHIN()
