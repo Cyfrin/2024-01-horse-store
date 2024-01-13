@@ -14,7 +14,7 @@ contract HorseStore is IHorseStore, ERC721Enumerable {
     string constant NFT_SYMBOL = "HS";
     uint256 public constant HORSE_HAPPY_IF_FED_WITHIN = 1 days;
 
-    mapping(uint256 id => uint256 lastFedTimeStamp) public horseIdToFedTimeStamp;
+    mapping(uint256 id => uint256 lastFedTimeStamp) public horseIdToFeedTimeStamp;
 
     constructor() ERC721(NFT_NAME, NFT_SYMBOL) {}
 
@@ -30,7 +30,7 @@ contract HorseStore is IHorseStore, ERC721Enumerable {
      * @notice allows anyone to feed anyone else's horse. 
      */
     function feedHorse(uint256 horseId) external {
-        horseIdToFedTimeStamp[horseId] = block.timestamp;
+        horseIdToFeedTimeStamp[horseId] = block.timestamp;
     }
 
     /*
@@ -39,7 +39,7 @@ contract HorseStore is IHorseStore, ERC721Enumerable {
      * @notice a horse is happy IFF it has been fed within the last HORSE_HAPPY_IF_FED_WITHIN seconds
      */
     function isHappyHorse(uint256 horseId) external view returns (bool) {
-        if (horseIdToFedTimeStamp[horseId] <= block.timestamp - HORSE_HAPPY_IF_FED_WITHIN) {
+        if (horseIdToFeedTimeStamp[horseId] <= block.timestamp - HORSE_HAPPY_IF_FED_WITHIN) {
             return false;
         }
         return true;
