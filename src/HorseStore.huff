@@ -63,8 +63,8 @@
 
 #define macro GET_HORSE_FED_TIMESTAMP() = takes (0) returns (0) {
     0x04 calldataload       // [horseId]
-    GET_SLOT_FROM_KEY(0x00) // [horseFedTimestamp]
-    sload                   // []
+    GET_SLOT_FROM_KEY(0x00) // [SlotForHorseFedTimestamp]
+    sload                   // [horseFedTimestamp]
 
     0x00 mstore             // [] Store value in memory.
     0x20 0x00 return        // Returns what' sin memory
