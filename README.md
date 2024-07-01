@@ -1,8 +1,8 @@
-<p align="center">
-<img src="https://res.cloudinary.com/droqoz7lg/image/upload/q_90/dpr_2.0/c_fill,g_auto,h_320,w_320/f_auto/v1/company/wnjnaknf11h238xdycxd?_a=BATAUVAA0" width="400" alt="horse-store">
-<br/>
+# First Flight #7: Horse Store
 
 *Much of the NFT code was inspired by [Huffmate](https://github.com/huff-language/huffmate/)*
+
+[//]: # (contest-details-open)
 
 # Contest Details
 
@@ -71,12 +71,9 @@ Horses must be able to be fed at all times.
 
 Even if you don't understand Huff... Maybe you can write some tests... 
 
-## Audit Criteria 
+[//]: # (contest-details-close)
 
-For this codebase, we consider any of the following to be in-scope:
-1. An issue with `HorseStore.sol`
-2. An issue with `HorseStore.huff`
-3. Any issue where `HorseStore.huff` functionality does not match `HorseStore.sol` functionality, not including gas costs, or specific storage slots. Sending any X calldata to either contract should result in them being in the same state. 
+[//]: # (getting-started-open)
 
 # Getting Started
 
@@ -108,6 +105,10 @@ make
 forge test
 ```
 
+[//]: # (getting-started-close)
+
+[//]: # (scope-open)
+
 # Audit Scope Details
 
 - Commit Hash: 
@@ -132,12 +133,19 @@ forge test
 - Tokens:
   - None
 
-# Roles
+For this codebase, we consider any of the following to be in-scope:
+1. An issue with `HorseStore.sol`
+2. An issue with `HorseStore.huff`
+3. Any issue where `HorseStore.huff` functionality does not match `HorseStore.sol` functionality, not including gas costs, or specific storage slots. Sending any X calldata to either contract should result in them being in the same state. 
 
-None
+[//]: # (scope-close)
+
+[//]: # (known-issues-open)
 
 # Known Issues
 
 - We understand that the exact 24 hour time frame for a horse to be happy can be manipulated on some chains. Please ignore any discrepancies in timestamps up to 120 seconds. If you find a way for a horse to be labelled incorrectly outside of a 120 second grace window, it should be considered a valid finding. 
 - We do not consider gas efficiency differences between the two valid findings. 
 - The exact error names can be different between the huff and solidity versions
+
+[//]: # (known-issues-close)
