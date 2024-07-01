@@ -2,8 +2,6 @@
 
 *Much of the NFT code was inspired by [Huffmate](https://github.com/huff-language/huffmate/)*
 
-[//]: # (contest-details-open)
-
 # Contest Details
 
 ### Prize Pool
@@ -24,7 +22,7 @@
   - Solidity: 28
   - Huff: 🐴 
 
-# Horse Store 
+[//]: # (contest-details-open)
 
 ## About
 
